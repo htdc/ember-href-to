@@ -1,4 +1,5 @@
 import LinkComponent from '@ember/routing/link-component';
+import { isPresent } from "@ember/utils";
 
 export default class {
 
@@ -12,7 +13,12 @@ export default class {
 
   maybeHandle() {
     if (this.shouldHandle()) {
-      this.handle();
+      return this.handle();
+    }
+
+    // Add extra check for native app behaviour
+    if (this.shouldHandleAsExternalNativeLink()) {
+      return this.handleAsExternalNativeLink();
     }
   }
 
@@ -26,10 +32,39 @@ export default class {
       this.recognizeUrl();
   }
 
+  shouldHandleAsExternalNativeLink() {
+    return this.isUnmodifiedLeftClick() &&
+      this.isNotIgnored() &&
+      this.hasNoActionHelper() &&
+      this.hasNoDownload() &&
+      this.isNotLinkComponent() &&
+
+      // Additional checks
+      this.hasUrl() &&
+      this.isNativeBuild() && // For native app builds only
+      !this.recognizeUrl(); // Confirm its not an internal link
+  }
+
+  // Standard ember-href-to behavour
   handle() {
     let router = this._getRouter();
     router.transitionTo(this.getUrlWithoutRoot());
     this.event.preventDefault();
+  }
+
+  /*
+   * In order to open external links in the mobile devices system browser, we need to
+   * pass '_system' through to the open method. This method has been overwritten by the
+   * cordova inappbrowser plugin so external links can successfully "escape" the webview
+   * on IOS (Works on android as well, although not explicitly required).
+   */
+  handleAsExternalNativeLink() {
+    window.open(this.url, '_system');
+    this.event.preventDefault();
+  }
+
+  hasUrl() {
+    return isPresent(this.url);
   }
 
   isUnmodifiedLeftClick() {
@@ -83,6 +118,10 @@ export default class {
     return didRecognize;
   }
 
+  isNativeBuild() {
+    return this._getPlatformService().isNativeBuild;
+  }
+
   getUrlWithoutRoot() {
     let url = this.url;
     let rootUrl = this._getRootUrl();
@@ -91,6 +130,10 @@ export default class {
 
   _getRouter() {
     return this.applicationInstance.lookup('service:router');
+  }
+
+  _getPlatformService() {
+    return this.applicationInstance.lookup('service:platform');
   }
 
   _getRootUrl() {
