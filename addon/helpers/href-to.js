@@ -1,5 +1,6 @@
 import Helper from "@ember/component/helper";
 import { getOwner } from "@ember/application";
+import { isPresent } from "@ember/utils";
 
 export function hrefTo(context, params) {
   let routing = getOwner(context).lookup("service:-routing");
@@ -16,7 +17,10 @@ function getParamsForGenerateURL(params) {
   } else {
     queryParams = {};
   }
-  let models = params; // the remainder are the models
+
+  // Filter out any items that aren't present
+  let models = params.filter(item => isPresent(item)); // the remainder are the models
+
   return [targetRouteName, models, queryParams];
 }
 
