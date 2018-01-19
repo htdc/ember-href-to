@@ -1,3 +1,4 @@
+import Ember from "ember";
 import LinkComponent from '@ember/routing/link-component';
 import { isPresent } from "@ember/utils";
 
@@ -140,8 +141,7 @@ export default class {
     let router = this._getRouter();
     let rootURL = router.get('rootURL');
 
-    // Add the hash to the front of the url if we are in native app build
-    if (this.isNativeBuild()) {
+    if (this.isNativeBuild() && !Ember.testing) {
       rootURL = '#' + rootURL;
     }
 
