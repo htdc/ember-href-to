@@ -140,6 +140,11 @@ export default class {
     let router = this._getRouter();
     let rootURL = router.get('rootURL');
 
+    // Add the hash to the front of the url if we are in native app build
+    if (this.isNativeBuild()) {
+      rootURL = '#' + rootURL;
+    }
+
     if (rootURL.charAt(rootURL.length - 1) !== '/') {
       rootURL = rootURL + '/';
     }
